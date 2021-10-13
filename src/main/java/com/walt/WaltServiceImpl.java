@@ -29,20 +29,12 @@ public class WaltServiceImpl implements WaltService {
             customerRepository.save(customer);
         }
         // get all drivers by city
-        List<Driver> drivers = driverRepository.findAllDriversByCity(customer.getCity());
-        // check for each driver if available in this time.
-        Iterator<Driver> it = drivers.iterator();
+        List<Driver> drivers = driverRepository.getAvailableDriver(customer.getCity(),deliveryTime,addHours(deliveryTime,1));
 
-        while (it.hasNext()) {
-            Driver driver = it.next();
-            Delivery delivery = deliveryRepository.findDeliveriesByDriverAndDeliveryTimeBetween(driver, deliveryTime, addHours(deliveryTime,1));
-            if (delivery != null) {
-                it.remove();
-            }
-        }
         if (drivers.isEmpty()) {
             throw new Exception("No Driver Available");
         }
+
         TreeMap<Integer, Driver> map = new TreeMap<>();
         // if we have more the one take the driver with minimal delivery
         for (Driver driver : drivers) {
@@ -83,7 +75,7 @@ public class WaltServiceImpl implements WaltService {
         return (double) new Random().nextInt(21);
     }
 
-    public Date addHours(Date date, int hours) {
+    private Date addHours(Date date, int hours) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.add(Calendar.HOUR_OF_DAY, hours);

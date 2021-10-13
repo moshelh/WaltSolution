@@ -1,6 +1,7 @@
 package com.walt.model;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Driver extends NamedEntity {

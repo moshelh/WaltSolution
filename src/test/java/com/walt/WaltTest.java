@@ -3,6 +3,7 @@ package com.walt;
 import com.walt.dao.*;
 import com.walt.model.*;
 import org.assertj.core.util.Lists;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import javax.annotation.Resource;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -48,9 +50,12 @@ public class WaltTest {
     @Resource
     RestaurantRepository restaurantRepository;
 
+    private Calendar calendar;
+
+
     @BeforeEach()
     public void prepareData(){
-
+        calendar = Calendar.getInstance();
         City jerusalem = new City("Jerusalem");
         City tlv = new City("Tel-Aviv");
         City bash = new City("Beer-Sheva");
@@ -115,17 +120,33 @@ public class WaltTest {
     public void createOrderAndAssignDriverTest() throws Exception {
         Restaurant mexican = restaurantRepository.findByName("restaurant");
         Customer beethoven = customerRepository.findByName("Beethoven");
-        Calendar calendar = Calendar.getInstance();
-        Delivery delivery = waltService.createOrderAndAssignDriver(beethoven, mexican, calendar.getTime());
+
+
+        Date date = calendar.getTime();
+        Delivery delivery = waltService.createOrderAndAssignDriver(beethoven, mexican, date);
         deliveryRepository.save(delivery);
-        System.out.println(delivery);
+        Assertions.assertEquals(((List<Delivery>)deliveryRepository.findAll()).size(),1);
+
         Restaurant vegan = restaurantRepository.findByName("vegan");
         Customer rachmaninoff = customerRepository.findByName("Rachmaninoff");
         calendar.add(Calendar.MINUTE,30);
         Delivery delivery1 = waltService.createOrderAndAssignDriver(rachmaninoff, vegan,calendar.getTime());
         deliveryRepository.save(delivery1);
-        System.out.println(delivery1);
-//        System.out.println(deliveryRepository.getTotalDistanceByDriver(driverRepository.findByName("Patricia")));
-        System.out.println(waltService.getDriverRankReport());
+        Assertions.assertEquals(((List<Delivery>)deliveryRepository.findAll()).size(),2);
+
+
     }
+
+    @Test
+    public void createDeliveryWithNewCustomer() throws Exception {
+        City tlv = cityRepository.findByName("Tel-Aviv");
+        Customer notExist = new Customer("notExist", tlv, "best address");
+        Restaurant vegan = restaurantRepository.findByName("vegan");
+        calendar.add(Calendar.MINUTE,10);
+        Delivery delivery2 = waltService.createOrderAndAssignDriver(notExist,vegan,calendar.getTime());
+        deliveryRepository.save(delivery2);
+        Assertions.assertEquals(((List<Delivery>)deliveryRepository.findAll()).size(),1);
+        Assertions.assertEquals(((List<Customer>)customerRepository.findAll()).size(),6);
+    }
+
 }
